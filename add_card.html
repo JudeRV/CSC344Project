@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-<!--  -->
 <head>
     <title>FACT Library</title>
 	<meta charset ="utf-8"> 
@@ -12,13 +11,15 @@
 	</style>
 </head>
 <body>
-	<h2>Add or Search:</h2>
+	<h2>Add a New Card:</h2>
+	
+	<form method = "POST" action = "add_card.html">
+		<input type="text" name="card_name" value="Card Name" id = "submit">
+        <input type="submit" name="card_name" value="Search Cards" id = "submit">
+	</form>
 
-	<form method = "GET" action="retrieve_cards.php">
-		<input type="submit" name="Add Card" value="Search Card" id = "submit">
-	</form>
-	<form method="GET" action="add_card.html">
-		<input type="submit" name="add_card" value="Add Card" id = "submit">
-	</form>
+    <script>
+
+    </script>
 </body>
 </html>
