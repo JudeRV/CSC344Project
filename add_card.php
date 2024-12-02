@@ -43,7 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <title>Add a New Card</title>
 	<meta charset ="utf-8"> 
 	<link rel="icon" type="image/x-icon" href="/images/favicon.ico">
-	<link rel="stylesheet" href="styles.css">
+	<link rel="stylesheet" href="style.css">
 	<style>
 		label {display: block; float:left; width:10%;}
 		input {display: block; width: 20%}
