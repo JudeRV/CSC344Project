@@ -2,3 +2,9 @@ html{
 	background-image: linear-gradient(to top right, #b49970, #d2caa7);
 	height: 100%;
 }
+button{
+	background-color: #92817A;
+	border: 1px solid black;
+	padding: .5em 1em;
+	
+}
