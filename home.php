@@ -4,7 +4,7 @@ require_once("../pdo_connect.php");
 
 try {
     // Query to fetch card data
-    $stmt = $dbc->query('SELECT * FROM Card'); // Replace "cards_table" with your actual table name
+    $stmt = $dbc->query('SELECT * FROM Card');
     $cards = $stmt->fetchAll(); // Fetch all card data
 } catch (PDOException $e) {
     die("Error fetching cards: " . $e->getMessage());
@@ -37,6 +37,7 @@ function filterCards($cards, $nameFilter, $colorsFilter, $setFilter) {
         return true;
     });
 }
+
 
 $filteredCards = filterCards($cards, $nameFilter, $colorsFilter, $setFilter);
 ?>
@@ -78,14 +79,13 @@ $filteredCards = filterCards($cards, $nameFilter, $colorsFilter, $setFilter);
         if (!empty($filteredCards)) {
             foreach ($filteredCards as $card) {
                 echo '<div class="card">';
-                echo '<h2>' . htmlspecialchars($card['name']) . '</h2>';
-                echo '<p>Type: ' . htmlspecialchars($card['type']) . '</p>';
-                echo '<p>Mana Cost: ' . htmlspecialchars($card['mana_cost']) . '</p>';
-                echo '<p>Colors: ' . htmlspecialchars($card['colors']) . '</p>';
-                echo '<p>Set: ' . htmlspecialchars($card['set']) . '</p>';
-                echo '<p>Description: ' . htmlspecialchars($card['description']) . '</p>';
+                echo '<h2>' . htmlspecialchars($card['CardName']) . '</h2>';
+                echo '<p>Mana Value: ' . htmlspecialchars($card['CardManaValue']) . '</p>';
+                echo '<p>Rarity: ' . htmlspecialchars($card['CardRarity']) . '</p>';
+                echo '<p>Current Price: $' . htmlspecialchars($card['CardCurrentPrice']) . '</p>';
                 echo '</div>';
             }
+            
         } else {
             echo '<p>No cards match the filters.</p>';
         }
