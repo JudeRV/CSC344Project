@@ -21,20 +21,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 		"Accept: application/json"
 	]);
 
-	$response = curl_exec($ch);
+	$api_response = curl_exec($ch);
 
-	if ($response === false) {
+	if ($api_response === false) {
 		echo("Error fetching API data: " . curl_error($ch));
 	}
 	else {
-		$data = json_decode($response, true);
-		// echo(json_encode($data, JSON_PRETTY_PRINT));
+		$api_response = json_decode($api_response);
+		// echo(print_r(json_encode($data, JSON_PRETTY_PRINT), true));
 
 		$sql = "SELECT VERSION();";
 		require_once("../pdo_connect.php");
 		$query = $dbc->prepare(($sql));
 		$query->execute();
-		echo($query->fetchAll());
 	}
 }
 ?>
@@ -52,6 +51,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 	</style>
 </head>
 <body>
+	<?php
+	foreach ($api_response->data as $card) {
+		echo("<p>" . $card->name . "</p>");
+		echo("<img src='" . $card->image_uris->normal . "'>");
+	}
+	?>
 	<h2>Add a New Card:</h2>
 	
 	<form action="add_card.php" method="POST">
