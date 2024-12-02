@@ -56,7 +56,7 @@ require_once("../pdo_connect.php");
 							<th>Image</th>
 							<th>Set</th>
 							<th>CardCurrentPrice</th>
-							<th>CardIndex</th>
+							<th>CardIndex</th><th>Deck</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -79,8 +79,7 @@ require_once("../pdo_connect.php");
                     <form action='add_card.php' method='POST'>
                         <input type='hidden' name='CardSetID' value='" . htmlspecialchars($card->set) . "'>
                         <input type='hidden' name='CardIndex' value='" . $cardIndex . "'>
-                        <input type='text' name='DeckName' placeholder='Deck Name' required>
-                        <input type='text' name='DeckDescription' placeholder='Deck Description' required>
+                        <input type='text' name='DeckName' placeholder='DeckID' required>
                         <button type='submit'>Add to Deck</button>
                     </form>
                     </td>";
