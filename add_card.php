@@ -7,14 +7,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 		echo("You must provide a card name.");
 		return;
 	}
-	echo($cardName);
+
 	$cardName = str_replace(" ", "+", trim($cardName));
-	echo($cardName);
+	
 	/*
 		https://scryfall.com/docs/api
 	*/
 	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_URL, "https://api.scryfall.com/cards/search?unique=prints&q=" . $cardName); // TODO: configure this url properly
+	curl_setopt($ch, CURLOPT_URL, "https://api.scryfall.com/cards/search?unique=prints&q=" . $cardName);
 	curl_Setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return data instead of displaying it
 	curl_setopt($ch, CURLOPT_HTTPHEADER, [
 		"User-Agent: MTGDatabaseApp/1.0",
@@ -28,7 +28,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 	}
 	else {
 		$data = json_decode($response, true);
-		echo(json_encode($data, JSON_PRETTY_PRINT));
+		// echo(json_encode($data, JSON_PRETTY_PRINT));
+
+		$sql = "SELECT VERSION();";
+		require_once("../pdo_connect.php");
+		$query = $dbc->prepare(($sql));
+		$query->execute();
+		echo($query->fetchAll());
 	}
 }
 ?>
@@ -51,9 +57,5 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 		<input type="text" name="card_name" value="Card Name" id = "card_name_text">
         <input type="submit" name="submit" value="Search Cards" id = "submit">
 	</form>
-
-    <script>
-
-    </script>
 </body>
 </html>
