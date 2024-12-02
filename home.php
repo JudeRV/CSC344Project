@@ -1,6 +1,15 @@
 <?php
 // Include the file that retrieves cards from the database
-include 'retrieve_cards.php';
+require_once("../pdo_connect.php");
+
+try {
+    // Query to fetch card data
+    $stmt = $dbc->query('SELECT * FROM Card'); // Replace "cards_table" with your actual table name
+    $cards = $stmt->fetchAll(); // Fetch all card data
+} catch (PDOException $e) {
+    die("Error fetching cards: " . $e->getMessage());
+}
+
 
 // Handle filtering logic
 $nameFilter = $_GET['name'] ?? '';
