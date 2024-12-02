@@ -7,25 +7,28 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 		echo("You must provide a card name.");
 		return;
 	}
+	echo($cardName);
+	$cardName = str_replace(" ", "+", trim($cardName));
+	echo($cardName);
 	/*
 		https://scryfall.com/docs/api
 	*/
 	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_URL, "https://api.scryfall.com/cards/named?fuzzy=" . $cardName); // TODO: configure this url properly
+	curl_setopt($ch, CURLOPT_URL, "https://api.scryfall.com/cards/search?unique=prints&q=" . $cardName); // TODO: configure this url properly
 	curl_Setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return data instead of displaying it
 	curl_setopt($ch, CURLOPT_HTTPHEADER, [
 		"User-Agent: MTGDatabaseApp/1.0",
 		"Accept: application/json"
 	]);
 
-	$response = curl_exec($ch); // PROBLEM: API only accepts HTTPS requests, so we need to get an SSL cert :( I'll handle it
+	$response = curl_exec($ch);
 
 	if ($response === false) {
 		echo("Error fetching API data: " . curl_error($ch));
 	}
 	else {
-		$data = json_decode($respose, true, );
-		echo($data);
+		$data = json_decode($response, true);
+		echo(json_encode($data, JSON_PRETTY_PRINT));
 	}
 }
 ?>
