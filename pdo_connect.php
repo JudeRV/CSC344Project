@@ -9,7 +9,7 @@ try{
 	$db_conn_string = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
 	$options = [
 		PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // Enable exceptions
-		PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_BOTH,       // Set default fetch mode
+		PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_BOTH,       // Set fetch mode to output data objects
 		PDO::ATTR_EMULATE_PREPARES   => false,                  // Use native prepared statements
 	];
 

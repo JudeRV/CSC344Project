@@ -1,41 +1,5 @@
 <?php
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-	if (isset($_POST["card_name"])) {
-		$cardName = htmlspecialchars($_POST["card_name"]);
-	}
-	else {
-		echo("You must provide a card name.");
-		return;
-	}
-
-	$cardName = str_replace(" ", "+", trim($cardName));
-	
-	/*
-		https://scryfall.com/docs/api
-	*/
-	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_URL, "https://api.scryfall.com/cards/search?unique=prints&q=" . $cardName);
-	curl_Setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return data instead of displaying it
-	curl_setopt($ch, CURLOPT_HTTPHEADER, [
-		"User-Agent: MTGDatabaseApp/1.0",
-		"Accept: application/json"
-	]);
-
-	$api_response = curl_exec($ch);
-
-	if ($api_response === false) {
-		echo("Error fetching API data: " . curl_error($ch));
-	}
-	else {
-		$api_response = json_decode($api_response);
-		// echo(print_r(json_encode($data, JSON_PRETTY_PRINT), true));
-
-		$sql = "SELECT VERSION();";
-		require_once("../pdo_connect.php");
-		$query = $dbc->prepare(($sql));
-		$query->execute();
-	}
-}
+require_once("../pdo_connect.php");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -90,8 +54,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $api_response = json_decode($api_response);
 
             if (!empty($api_response->data)) {
-                echo "<table>";
-                echo "<tr><th>Card Name</th><th>Image</th><th>Set</th><th>CardCurrentPrice</th><th>CardIndex</th></tr>";
+                echo <<<EOD
+				<table>
+					<thead>
+						<tr>
+							<th>Card Name</th>
+							<th>Image</th>
+							<th>Set</th>
+							<th>CardCurrentPrice</th>
+							<th>CardIndex</th>
+						</tr>
+					</thead>
+					<tbody>
+				EOD;
 
                 foreach ($api_response->data as $index => $card) {
                     $price = isset($card->prices->usd) ? "$" . htmlspecialchars($card->prices->usd) : "N/A";
@@ -104,7 +79,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     echo "</tr>";
                 }
 
-                echo "</table>";
+                echo <<<EOD
+					</tbody>
+				</table>
+				EOD;
             } else {
                 echo "<p>No cards found matching the search criteria.</p>";
             }
