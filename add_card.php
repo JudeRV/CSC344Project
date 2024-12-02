@@ -10,13 +10,12 @@ require_once("../pdo_connect.php");
     <link rel="stylesheet" href="styles.css">
     <style>
         label {display: block; float: left; width: 10%;}
-        input {display: block; width: 20%;}
+        input, select {display: block; width: 20%;}
         #submit {width: 10%; margin-top: 2rem; margin-left: 2%;}
         table {width: 100%; border-collapse: collapse; margin-top: 20px;}
         th, td {border: 1px solid #ddd; padding: 8px; text-align: center;}
         th {background-color: #f4f4f4;}
-        .card-image {position: relative;}
-        .card-image img {max-width: 100px; height: auto; transition: transform 0.3s ease;}
+        .card-image img {max-width: 100px; height: auto; transition: transform 0.3s ease; z-index: 10;}
         .card-image:hover img {transform: scale(4); z-index: 10; position: relative;}
     </style>
 </head>
@@ -28,14 +27,8 @@ require_once("../pdo_connect.php");
     </form>
 
     <?php
-    if ($_SERVER["REQUEST_METHOD"] === "POST") {
-        if (isset($_POST["card_name"])) {
-            $cardName = htmlspecialchars($_POST["card_name"]);
-        } else {
-            echo "You must provide a card name.";
-            return;
-        }
-
+    if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["card_name"])) {
+        $cardName = htmlspecialchars($_POST["card_name"]);
         $cardName = str_replace(" ", "+", trim($cardName));
 
         $ch = curl_init();
@@ -47,9 +40,10 @@ require_once("../pdo_connect.php");
         ]);
 
         $api_response = curl_exec($ch);
+        curl_close($ch);
 
         if ($api_response === false) {
-            echo "Error fetching API data: " . curl_error($ch);
+            echo "Error fetching API data.";
         } else {
             $api_response = json_decode($api_response);
 
@@ -70,12 +64,26 @@ require_once("../pdo_connect.php");
 
                 foreach ($api_response->data as $index => $card) {
                     $price = isset($card->prices->usd) ? "$" . htmlspecialchars($card->prices->usd) : "N/A";
+                    $set = htmlspecialchars($card->set_name);
+                    $cardIndex = $index + 1;
+
                     echo "<tr>";
                     echo "<td>" . htmlspecialchars($card->name) . "</td>";
                     echo "<td class='card-image'><img src='" . htmlspecialchars($card->image_uris->normal) . "' alt='Card Image'></td>";
-                    echo "<td>" . htmlspecialchars($card->set_name) . "</td>";
+                    echo "<td>" . $set . "</td>";
                     echo "<td>" . $price . "</td>";
-                    echo "<td>" . ($index + 1) . "</td>"; // CardIndex based on iteration
+                    echo "<td>" . $cardIndex . "</td>";
+					// I haven't been able to get this adding to deck work
+                    echo "<td>
+					
+                    <form action='add_card.php' method='POST'>
+                        <input type='hidden' name='CardSetID' value='" . htmlspecialchars($card->set) . "'>
+                        <input type='hidden' name='CardIndex' value='" . $cardIndex . "'>
+                        <input type='text' name='DeckName' placeholder='Deck Name' required>
+                        <input type='text' name='DeckDescription' placeholder='Deck Description' required>
+                        <button type='submit'>Add to Deck</button>
+                    </form>
+                    </td>";
                     echo "</tr>";
                 }
 
@@ -87,8 +95,6 @@ require_once("../pdo_connect.php");
                 echo "<p>No cards found matching the search criteria.</p>";
             }
         }
-
-        curl_close($ch);
     }
     ?>
 </body>
