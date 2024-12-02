@@ -34,6 +34,7 @@
 <head>
     <title>FACT Library</title>
 	<meta charset ="utf-8"> 
+	<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 	<h2> Books Found: </h2>
