@@ -1,4 +1,7 @@
 <?php
+if (!isset($_COOKIE["user"])) {
+    header("Location: login.php"); // Redirect to login if not logged in
+}
 require_once("../pdo_connect.php");
 
 function validateData($data) {

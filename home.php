@@ -1,4 +1,7 @@
 <?php
+if (!isset($_COOKIE["user"])) {
+    header("Location: login.php"); // Redirect to login if not logged in
+}
 // Include the file that retrieves cards from the database
 require_once("../pdo_connect.php");
 

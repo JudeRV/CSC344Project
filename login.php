@@ -1,5 +1,6 @@
 <?php
 require_once("../pdo_connect.php");
+setcookie("user", "", 0, "/", "ada.cis.uncw.edu", true, true); // Log user out upon navigating to login page
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $username = $_POST["username"];
     $password = $_POST["password"];
@@ -10,7 +11,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     try {
         $sql = "
-        SELECT COUNT(*)
+        SELECT UserID
         FROM Account
         WHERE Username = :username
         AND UserPassword = :password
@@ -22,7 +23,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         if ($stmt->execute()) { // Execute statement and check for success
             if ($stmt->rowcount() === 1) {
-                
+                $userID = $stmt->fetchColumn();
+                setcookie("user", $userID, time() + 3600, "/", "ada.cis.uncw.edu", true, true);
+                header("Location: home.php");
+            }
+            else {
+                echo("Invalid username or passwoord. Please try again.");
             }
         }
         else {
@@ -39,8 +45,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <html lang="en">
 <head>
     <title>Login</title>
+    <meta charset="utf-8">
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
     <style>
-        input, select {display: block; width: 20%;}
+        input, select {display: block; width: 20%; margin: 1rem 0;}
         #submit {width: 10%; margin-top: 2rem; margin-left: 2%;}
     </style>
 </head>
