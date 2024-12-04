@@ -1,25 +1,40 @@
 <?php
-require_once("../pdo_connect.php");
-$deckId = $_GET['deck_id'] ?? null;
-if (!$deckId) {
-    die("No Deck ID provided.");
+if (!isset($_COOKIE["user"])) {
+    header("Location: login.php"); // Redirect to login if not logged in
 }
+require_once("../pdo_connect.php");
+$deckId = $_GET['deck_id'];
+if (!isset($deckId)) {
+    try {
+        $sql = "
+            SELECT DISTINCT d.DeckID, d.DeckName, d.DeckDescription
+            FROM Deck d, Includes i, Card c, Account a
+            WHERE d.DeckID = i.DeckID
+            AND i.CardSetID = c.CardSetID AND i.CardIndex = c.CardIndex
+            AND c.UserID = a.UserID
+        ";
+    }
+    catch (PDOException $e) {
 
-try {
-    $sql = "
-        SELECT c.CardName, c.CardManaValue, c.CardRarity, c.CardCurrentPrice 
-        FROM Card AS c
-        INNER JOIN Includes AS i ON c.CardSetID = i.CardSetID AND c.CardIndex = i.CardIndex
-        WHERE i.DeckID = :deckId
-    ";
-
-    $stmt = $dbc->prepare($sql);
-    $stmt->bindValue(':deckId', $deckId, PDO::PARAM_INT);
-    $stmt->execute();
-    $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (PDOException $e) {
-    die("Error fetching deck: " . $e->getMessage());
+    }
+}
+else {
+    try {
+        $sql = "
+            SELECT c.CardName, c.CardManaValue, c.CardRarity, c.CardCurrentPrice 
+            FROM Card AS c
+            INNER JOIN Includes AS i ON c.CardSetID = i.CardSetID AND c.CardIndex = i.CardIndex
+            WHERE i.DeckID = :deckId
+        ";
+    
+        $stmt = $dbc->prepare($sql);
+        $stmt->bindParam(':deckId', $deckId, PDO::PARAM_INT);
+        $stmt->execute();
+        $cards = $stmt->fetchAll();
+    
+    } catch (PDOException $e) {
+        die("Error fetching deck: " . $e->getMessage());
+    }
 }
 ?>
 <!DOCTYPE html>
