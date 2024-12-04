@@ -14,9 +14,8 @@ try{
 	];
 
 	$dbc = new PDO($db_conn_string, $username, $password, $options);
-
-	echo("DB Porpoised successfully");
 } catch (PDOException $e){
-	echo $e->getMessage();
+	echo($e->getMessage());
+	echo(print_r($e->getTrace(), true));
 }
 ?>
