@@ -1,44 +1,50 @@
 <?php
 require_once("../pdo_connect.php");
+$deckId = $_GET['deck_id'] ?? null;
+if (!$deckId) {
+    die("No Deck ID provided.");
+}
 
-// Fetch all decks
-$sql = "SELECT * FROM Deck";
-$stmt = $dbc->query($sql);
-$decks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+try {
+    $sql = "
+        SELECT c.CardName, c.CardManaValue, c.CardRarity, c.CardCurrentPrice 
+        FROM Card AS c
+        INNER JOIN Includes AS i ON c.CardSetID = i.CardSetID AND c.CardIndex = i.CardIndex
+        WHERE i.DeckID = :deckId
+    ";
+
+    $stmt = $dbc->prepare($sql);
+    $stmt->bindValue(':deckId', $deckId, PDO::PARAM_INT);
+    $stmt->execute();
+    $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+} catch (PDOException $e) {
+    die("Error fetching deck: " . $e->getMessage());
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>All Decks</title>
-    <style>
-        table {width: 80%; margin: 20px auto; border-collapse: collapse;}
-        th, td {border: 1px solid #ddd; padding: 8px; text-align: center;}
-        th {background-color: #f4f4f4;}
-        h1 {text-align: center;}
-    </style>
+    <title>Deck Details</title>
+    <link rel="stylesheet" href="style.css"> 
 </head>
 <body>
-    <h1>All Decks</h1>
-
-    <?php if (empty($decks)): ?>
-        <p style="text-align: center;">No decks found in the database.</p>
-    <?php else: ?>
-        <table>
-            <tr>
-                <?php foreach (array_keys($decks[0]) as $column): ?>
-                    <th><?php echo htmlspecialchars($column); ?></th>
-                <?php endforeach; ?>
-            </tr>
-            <?php foreach ($decks as $deck): ?>
-                <tr>
-                    <?php foreach ($deck as $value): ?>
-                        <td><?php echo htmlspecialchars($value); ?></td>
-                    <?php endforeach; ?>
-                </tr>
+    <h1>Deck Details</h1>
+    <div class="deck-container">
+        <?php if (!empty($cards)): ?>
+            <?php foreach ($cards as $card): ?>
+                <div class="card">
+                    <h2><?php echo htmlspecialchars($card['CardName']); ?></h2>
+                    <p>Mana Value: <?php echo htmlspecialchars($card['CardManaValue']); ?></p>
+                    <p>Rarity: <?php echo htmlspecialchars($card['CardRarity']); ?></p>
+                    <p>Current Price: $<?php echo htmlspecialchars($card['CardCurrentPrice']); ?></p>
+                </div>
             <?php endforeach; ?>
-        </table>
-    <?php endif; ?>
+        <?php else: ?>
+            <p>No cards found in this deck.</p>
+        <?php endif; ?>
+    </div>
 </body>
 </html>

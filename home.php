@@ -3,43 +3,37 @@
 require_once("../pdo_connect.php");
 
 try {
-    // Query to fetch card data
-    $stmt = $dbc->query('SELECT * FROM Card');
-    $cards = $stmt->fetchAll(); // Fetch all card data
+
+    $nameFilter = $_GET['name'] ?? '';
+    $colorsFilter = $_GET['colors'] ?? [];
+    $setFilter = $_GET['set'] ?? '';  
+    $sql = "SELECT * FROM Card WHERE 1=1";
+    $params = [];
+ 
+    if (!empty($nameFilter)) {
+        $sql .= " AND CardName LIKE :name";
+        $params[':name'] = "%" . $nameFilter . "%";
+    }
+  
+    if (!empty($setFilter)) {
+        $sql .= " AND CardSet LIKE :set";
+        $params[':set'] = "%" . $setFilter . "%";
+    }
+ 
+    $stmt = $dbc->prepare($sql);
+    $stmt->execute($params);
+    $cards = $stmt->fetchAll(PDO::FETCH_ASSOC); // Fetch all card data
+
 } catch (PDOException $e) {
     die("Error fetching cards: " . $e->getMessage());
 }
 
-
-// Handle filtering logic
-$nameFilter = $_GET['name'] ?? '';
-$colorsFilter = $_GET['colors'] ?? [];
-$setFilter = $_GET['set'] ?? '';
-
-// Filter the $cards array (modify based on how data retrieval works)
-function filterCards($cards, $nameFilter, $colorsFilter, $setFilter) {
-    return array_filter($cards, function($card) use ($nameFilter, $colorsFilter, $setFilter) {
-        // Fuzzy name matching
-        if ($nameFilter && stripos($card['name'], $nameFilter) === false) {
-            return false;
-        }
-
-        // Color matching (checks if card has one of the selected colors)
-        if (!empty($colorsFilter) && !array_intersect($colorsFilter, explode(',', $card['colors']))) {
-            return false;
-        }
-
-        // Set matching
-        if ($setFilter && stripos($card['set'], $setFilter) === false) {
-            return false;
-        }
-
-        return true;
+if (!empty($colorsFilter)) {
+    $cards = array_filter($cards, function ($card) use ($colorsFilter) {
+        $cardColors = explode(',', strtolower($card['colors'])); 
+        return !empty(array_intersect($colorsFilter, $cardColors));
     });
 }
-
-
-$filteredCards = filterCards($cards, $nameFilter, $colorsFilter, $setFilter);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -47,7 +41,7 @@ $filteredCards = filterCards($cards, $nameFilter, $colorsFilter, $setFilter);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Magic: The Gathering Collection</title>
-    <link rel="stylesheet" href="style.css"> <!-- Optional, for CSS -->
+    <link rel="stylesheet" href="style.css"> 
 </head>
 <body>
     <h1>Magic: The Gathering Collection</h1>
@@ -76,8 +70,8 @@ $filteredCards = filterCards($cards, $nameFilter, $colorsFilter, $setFilter);
 
     <div class="card-container">
         <?php
-        if (!empty($filteredCards)) {
-            foreach ($filteredCards as $card) {
+        if (!empty($cards)) {
+            foreach ($cards as $card) {
                 echo '<div class="card">';
                 echo '<h2>' . htmlspecialchars($card['CardName']) . '</h2>';
                 echo '<p>Mana Value: ' . htmlspecialchars($card['CardManaValue']) . '</p>';
@@ -85,7 +79,6 @@ $filteredCards = filterCards($cards, $nameFilter, $colorsFilter, $setFilter);
                 echo '<p>Current Price: $' . htmlspecialchars($card['CardCurrentPrice']) . '</p>';
                 echo '</div>';
             }
-            
         } else {
             echo '<p>No cards match the filters.</p>';
         }
