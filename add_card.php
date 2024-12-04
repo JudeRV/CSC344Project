@@ -4,15 +4,16 @@ require_once("../pdo_connect.php");
 function validateData($data) {
     if (isset($data)) {
         return $data;
+    } else {
+        return null;
     }
-    else return null;
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <title>Add a New Card</title>
-    <meta charset="utf-8"> 
+    <meta charset="utf-8">
     <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
     <link rel="stylesheet" href="styles.css">
     <style>
@@ -24,6 +25,7 @@ function validateData($data) {
         th {background-color: #f4f4f4;}
         .card-image img {max-width: 100px; height: auto; transition: transform 0.3s ease; z-index: 10;}
         .card-image:hover img {transform: scale(4); z-index: 10; position: relative;}
+        .grid {padding: 7rem;}
     </style>
 </head>
 <body>
@@ -35,7 +37,7 @@ function validateData($data) {
 
     <?php
     if ($_SERVER["REQUEST_METHOD"] === "POST") {
-        if (isset($_POST["search_query"])) { // If searching for a new card to add
+        if (isset($_POST["search_query"])) { // Searching for cards
             $cardName = htmlspecialchars($_POST["search_query"]);
             $cardName = str_replace(" ", "+", trim($cardName));
     
@@ -63,51 +65,43 @@ function validateData($data) {
                                 <th>Card Name</th>
                                 <th>Image</th>
                                 <th>Set</th>
-                                <th>CardCurrentPrice</th>
-                                <th>CardIndex</th><th>Deck</th>
+                                <th>Price</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                     EOD;
     
-                    foreach ($api_response->data as $index => $card) {                                                
-                        // For database
+                    foreach ($api_response->data as $card) {                                                
                         $cardSetID = validateData($card->set);
                         $cardIndex = validateData($card->collector_number);
-                        $scryfallID = validateData($card->id);
                         $cardName = validateData($card->name);
                         $cardManaValue = validateData($card->cmc);
                         $cardRarity = validateData($card->rarity);
                         $cardCurrentPrice = validateData($card->prices->usd);
+                        $cardColors = implode(",", $card->colors ?? []); // Convert colors array to string
                         $cardImageURI = validateData($card->image_uris->normal);
 
-                        // For display
-                        $setName = htmlspecialchars($card->set_name);
-                        $price = isset($cardCurrentPrice) ? "$" . htmlspecialchars($cardCurrentPrice) : "N/A";
-    
                         echo "<tr>";
                         echo "<td>" . htmlspecialchars($cardName) . "</td>";
-                        echo "<td class='card-image'><img src='" . htmlspecialchars($card->image_uris->normal) . "' alt='Card Image'></td>";
-                        echo "<td>" . $setName . " (" . strtoupper($cardSetID) . ")</td>";
-                        echo "<td>" . $price . "</td>";
-                        echo "<td>" . $cardIndex . "</td>";
-                        // I haven't been able to get this adding to deck work
+                        echo "<td class='card-image'><img src='" . htmlspecialchars($cardImageURI) . "' alt='Card Image'></td>";
+                        echo "<td>" . htmlspecialchars($cardSetID) . "</td>";
+                        echo "<td>" . (isset($cardCurrentPrice) ? "$" . htmlspecialchars($cardCurrentPrice) : "N/A") . "</td>";
                         echo <<<EOD
                         <td>
-                            <form action='add_card.php' method='POST'>
-                                <input type='hidden' name='CardSetID' value='$cardSetID'>
-                                <input type='hidden' name='CardIndex' value='$cardIndex'>
-                                <input type='hidden' name='ScryfallID' value='$scryfallID'>
-                                <input type='hidden' name='CardName' value='$cardName'>
-                                <input type='hidden' name='CardManaValue' value='$cardManaValue'>
-                                <input type='hidden' name='CardRarity' value='$cardRarity'>
-                                <input type='hidden' name='CardCurrentPrice' value='$cardCurrentPrice'>
-                                <input type='hidden' name='CardImageURI' value='$cardImageURI'>                                
-                                <button type='submit'>Add to Deck</button>
+                            <form action="add_card.php" method="POST">
+                                <input type="hidden" name="CardSetID" value="$cardSetID">
+                                <input type="hidden" name="CardIndex" value="$cardIndex">
+                                <input type="hidden" name="CardName" value="$cardName">
+                                <input type="hidden" name="CardManaValue" value="$cardManaValue">
+                                <input type="hidden" name="CardRarity" value="$cardRarity">
+                                <input type="hidden" name="CardCurrentPrice" value="$cardCurrentPrice">
+                                <input type="hidden" name="Colors" value="$cardColors">
+                                <input type="hidden" name="CardImageURI" value="$cardImageURI">
+                                <button type="submit">Add to Deck</button>
                             </form>
                         </td>
                         EOD;
-                        // <input type='text' name='DeckName' placeholder='DeckID' required>
                         echo "</tr>";
                     }
     
@@ -119,51 +113,42 @@ function validateData($data) {
                     echo "<p>No cards found matching the search criteria.</p>";
                 }
             }
-        }
-        else { // If attempting to add a card to the database from search results
+        } else { // Adding a card to the database
             try {
                 $cardSetID = $_POST["CardSetID"];
-                $cardIndex = $_POST['CardIndex'];
-                $scryfallID = $_POST["ScryfallID"];
+                $cardIndex = $_POST["CardIndex"];
                 $cardName = $_POST["CardName"];
-                $cardManaValue = intval($_POST["CardManaValue"]);
+                $cardManaValue = $_POST["CardManaValue"];
                 $cardRarity = $_POST["CardRarity"];
                 $cardCurrentPrice = $_POST["CardCurrentPrice"];
-                $userID = 2; // TODO: Make this not hard-coded anymore
-                $cardImageURI = $_POST["CardImageURI"];
-            }
-            catch (Exception $e) {
-                echo("Error: " . $e->getMessage());
-                echo("Trace: " . print_r($e->getTrace(), true));
-            }
+                $colors = $_POST["Colors"];
+                $userID = 2; // TODO: Replace with the logged-in user ID
 
-            try {
-                $insertStatement = "INSERT INTO Card (CardSetID, CardIndex, ScryfallID, CardName, CardManaValue, CardRarity, CardCurrentPrice, UserID, CardImageURI) VALUES (:setid, :index, :scryfall, :name, :manavalue, :rarity, :price, :userid, :image)";
-                $stmt = $dbc->prepare($insertStatement);
+                // Call the stored procedure
+                $sql = "CALL InsertCardWithColors(:CardSetID, :CardIndex, :CardName, :CardManaValue, :CardRarity, :CardCurrentPrice, :UserID, :Colors)";
+                $stmt = $dbc->prepare($sql);
+                $stmt->bindParam(":CardSetID", $cardSetID);
+                $stmt->bindParam(":CardIndex", $cardIndex);
+                $stmt->bindParam(":CardName", $cardName);
+                $stmt->bindParam(":CardManaValue", $cardManaValue);
+                $stmt->bindParam(":CardRarity", $cardRarity);
+                $stmt->bindParam(":CardCurrentPrice", $cardCurrentPrice);
+                $stmt->bindParam(":UserID", $userID);
+                $stmt->bindParam(":Colors", $colors);
 
-                $stmt->bindParam(":setid", $cardSetID, PDO::PARAM_STR);
-                $stmt->bindParam(":index", $cardIndex, PDO::PARAM_STR);
-                $stmt->bindParam(":scryfall", $scryfallID, PDO::PARAM_STR);
-                $stmt->bindParam(":name", $cardName, PDO::PARAM_STR);
-                $stmt->bindParam(":manavalue", $cardManaValue, PDO::PARAM_INT);
-                $stmt->bindParam(":rarity", $cardRarity, PDO::PARAM_STR);
-                $stmt->bindParam(":price", $cardCurrentPrice, PDO::PARAM_STR);
-                $stmt->bindParam(":userid", $userID, PDO::PARAM_INT);
-                $stmt->bindParam(":image", $cardImageURI, PDO::PARAM_STR);
-    
-                if ($stmt->execute()) { // Execute statement and check for success
-                    echo("Card inserted successfully!!!");
+                if ($stmt->execute()) {
+                    echo "<p>Card and its colors were successfully added!</p>";
+                } else {
+                    echo "<p>Failed to add the card.</p>";
                 }
-                else {
-                    echo("Failed to insert card (no exceptions thrown tho)");
-                }
-            }
-            catch (PDOException $e) {
-                echo("Error: " . $e->getMessage());
-                echo("Trace: " . print_r($e->getTrace(), true));
+            } catch (PDOException $e) {
+                echo "<p>Error: " . $e->getMessage() . "</p>";
             }
         }
     }
     ?>
+    <footer>
+        <div class="grid"></div>
+    </footer>
 </body>
 </html>
