@@ -1,24 +1,42 @@
 <?php
-if (!isset($_COOKIE["user"])) {
-    header("Location: login.php"); // Redirect to login if not logged in
-}
-require_once("../pdo_connect.php");
-$deckId = $_GET['deck_id'];
-if (!isset($deckId)) {
-    try {
-        $sql = "
-            SELECT DISTINCT d.DeckID, d.DeckName, d.DeckDescription
-            FROM Deck d, Includes i, Card c, Account a
-            WHERE d.DeckID = i.DeckID
-            AND i.CardSetID = c.CardSetID AND i.CardIndex = c.CardIndex
-            AND c.UserID = a.UserID
-        ";
-    }
-    catch (PDOException $e) {
 
+require_once("../pdo_connect.php");
+
+// Handle deck creation
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_deck'])) {
+    $deckName = $_POST['deck_name'];
+    $deckDescription = $_POST['deck_description'];
+
+    try {
+        // Insert new deck and automatically assign DeckID
+        $insertDeckSQL = "INSERT INTO Deck (DeckName, DeckDescription) VALUES (:deckName, :deckDescription)";
+        $stmt = $dbc->prepare($insertDeckSQL);
+        $stmt->execute([':deckName' => $deckName, ':deckDescription' => $deckDescription]);
+        echo "<p>Deck '$deckName' created successfully!</p>";
+    } catch (PDOException $e) {
+        die("Error creating deck: " . $e->getMessage());
     }
 }
-else {
+
+// Handle adding a card to the deck
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['card_id'], $_POST['deck_id'])) {
+    $cardSetID = $_POST['card_set_id'];
+    $cardIndex = $_POST['card_id'];
+    $deckID = $_POST['deck_id'];
+
+    try {
+        $insertCardSQL = "INSERT INTO Includes (CardSetID, CardIndex, DeckID) VALUES (:cardSetID, :cardIndex, :deckID)";
+        $stmt = $dbc->prepare($insertCardSQL);
+        $stmt->execute([':cardSetID' => $cardSetID, ':cardIndex' => $cardIndex, ':deckID' => $deckID]);
+        echo "<p>Card added to the deck successfully!</p>";
+    } catch (PDOException $e) {
+        die("Error adding card to deck: " . $e->getMessage());
+    }
+}
+
+// Fetch deck details if deck_id is provided
+if (isset($_GET['deck_id'])) {
+    $deckId = $_GET['deck_id'];
     try {
         $sql = "
             SELECT c.CardName, c.CardManaValue, c.CardRarity, c.CardCurrentPrice 
@@ -26,16 +44,15 @@ else {
             INNER JOIN Includes AS i ON c.CardSetID = i.CardSetID AND c.CardIndex = i.CardIndex
             WHERE i.DeckID = :deckId
         ";
-    
         $stmt = $dbc->prepare($sql);
         $stmt->bindParam(':deckId', $deckId, PDO::PARAM_INT);
         $stmt->execute();
-        $cards = $stmt->fetchAll();
-    
+        $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
         die("Error fetching deck: " . $e->getMessage());
     }
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -46,6 +63,17 @@ else {
     <link rel="stylesheet" href="style.css"> 
 </head>
 <body>
+    <h1>Create a New Deck</h1>
+    <form method="POST">
+        <label for="deck_name">Deck Name:</label>
+        <input type="text" id="deck_name" name="deck_name" required>
+
+        <label for="deck_description">Deck Description:</label>
+        <textarea id="deck_description" name="deck_description" required></textarea>
+
+        <button type="submit" name="create_deck">Create Deck</button>
+    </form>
+
     <h1>Deck Details</h1>
     <div class="deck-container">
         <?php if (!empty($cards)): ?>

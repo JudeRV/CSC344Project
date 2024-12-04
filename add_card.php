@@ -2,11 +2,7 @@
 require_once("../pdo_connect.php");
 
 function validateData($data) {
-    if (isset($data)) {
-        return $data;
-    } else {
-        return null;
-    }
+    return isset($data) ? $data : null;
 }
 ?>
 <!DOCTYPE html>
@@ -72,9 +68,10 @@ function validateData($data) {
                         <tbody>
                     EOD;
     
-                    foreach ($api_response->data as $card) {                                                
+                    foreach ($api_response->data as $card) {                                                 
                         $cardSetID = validateData($card->set);
                         $cardIndex = validateData($card->collector_number);
+                        $scryfallID = validateData($card->id);
                         $cardName = validateData($card->name);
                         $cardManaValue = validateData($card->cmc);
                         $cardRarity = validateData($card->rarity);
@@ -92,6 +89,7 @@ function validateData($data) {
                             <form action="add_card.php" method="POST">
                                 <input type="hidden" name="CardSetID" value="$cardSetID">
                                 <input type="hidden" name="CardIndex" value="$cardIndex">
+                                <input type='hidden' name='ScryfallID' value='$scryfallID'>
                                 <input type="hidden" name="CardName" value="$cardName">
                                 <input type="hidden" name="CardManaValue" value="$cardManaValue">
                                 <input type="hidden" name="CardRarity" value="$cardRarity">
@@ -116,24 +114,28 @@ function validateData($data) {
         } else { // Adding a card to the database
             try {
                 $cardSetID = $_POST["CardSetID"];
+                $scryfallID = $_POST["ScryfallID"];
                 $cardIndex = $_POST["CardIndex"];
                 $cardName = $_POST["CardName"];
                 $cardManaValue = $_POST["CardManaValue"];
                 $cardRarity = $_POST["CardRarity"];
                 $cardCurrentPrice = $_POST["CardCurrentPrice"];
                 $colors = $_POST["Colors"];
+                $cardImageURI = $_POST["CardImageURI"];
                 $userID = 2; // TODO: Replace with the logged-in user ID
 
                 // Call the stored procedure
-                $sql = "CALL InsertCardWithColors(:CardSetID, :CardIndex, :CardName, :CardManaValue, :CardRarity, :CardCurrentPrice, :UserID, :Colors)";
+                $sql = "CALL InsertCardWithColors(:CardSetID, :CardIndex, :ScryfallID, :CardName, :CardManaValue, :CardRarity, :CardCurrentPrice, :UserID, :CardImageURI, :Colors)";
                 $stmt = $dbc->prepare($sql);
                 $stmt->bindParam(":CardSetID", $cardSetID);
+                $stmt->bindParam(":ScryfallID", $scryfallID);
                 $stmt->bindParam(":CardIndex", $cardIndex);
                 $stmt->bindParam(":CardName", $cardName);
                 $stmt->bindParam(":CardManaValue", $cardManaValue);
                 $stmt->bindParam(":CardRarity", $cardRarity);
                 $stmt->bindParam(":CardCurrentPrice", $cardCurrentPrice);
                 $stmt->bindParam(":UserID", $userID);
+                $stmt->bindParam(":CardImageURI", $cardImageURI);
                 $stmt->bindParam(":Colors", $colors);
 
                 if ($stmt->execute()) {

@@ -3,26 +3,25 @@
 require_once("../pdo_connect.php");
 
 try {
-
     $nameFilter = $_GET['name'] ?? '';
     $colorsFilter = $_GET['colors'] ?? [];
-    $setFilter = $_GET['set'] ?? '';  
+    $setFilter = $_GET['set'] ?? '';
     $sql = "SELECT * FROM Card WHERE 1=1";
     $params = [];
- 
+
     if (!empty($nameFilter)) {
         $sql .= " AND CardName LIKE :name";
         $params[':name'] = "%" . $nameFilter . "%";
     }
-  
+
     if (!empty($setFilter)) {
         $sql .= " AND CardSet LIKE :set";
         $params[':set'] = "%" . $setFilter . "%";
     }
- 
+
     $stmt = $dbc->prepare($sql);
     $stmt->execute($params);
-    $cards = $stmt->fetchAll(PDO::FETCH_ASSOC); // Fetch all card data
+    $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
     die("Error fetching cards: " . $e->getMessage());
@@ -30,9 +29,17 @@ try {
 
 if (!empty($colorsFilter)) {
     $cards = array_filter($cards, function ($card) use ($colorsFilter) {
-        $cardColors = explode(',', strtolower($card['colors'])); 
+        $cardColors = explode(',', strtolower($card['colors']));
         return !empty(array_intersect($colorsFilter, $cardColors));
     });
+}
+
+// Fetch available decks for selection
+try {
+    $deckQuery = $dbc->query("SELECT * FROM Deck");
+    $decks = $deckQuery->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("Error fetching decks: " . $e->getMessage());
 }
 ?>
 <!DOCTYPE html>
@@ -41,7 +48,7 @@ if (!empty($colorsFilter)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Magic: The Gathering Collection</title>
-    <link rel="stylesheet" href="style.css"> 
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <h1>Magic: The Gathering Collection</h1>
@@ -77,6 +84,21 @@ if (!empty($colorsFilter)) {
                 echo '<p>Mana Value: ' . htmlspecialchars($card['CardManaValue']) . '</p>';
                 echo '<p>Rarity: ' . htmlspecialchars($card['CardRarity']) . '</p>';
                 echo '<p>Current Price: $' . htmlspecialchars($card['CardCurrentPrice']) . '</p>';
+                ?>
+                <form method="POST" action="deck.php">
+                    <input type="hidden" name="card_id" value="<?php echo htmlspecialchars($card['CardInd']); ?>">
+                    <input type="hidden" name="card_set_id" value="<?php echo htmlspecialchars($card['CardSetID']); ?>">
+                    <label for="deck_id">Add to Deck:</label>
+                    <select name="deck_id" id="deck_id">
+                        <?php
+                        foreach ($decks as $deck) {
+                            echo '<option value="' . htmlspecialchars($deck['DeckID']) . '">' . htmlspecialchars($deck['DeckName']) . '</option>';
+                        }
+                        ?>
+                    </select>
+                    <button type="submit">Add Card</button>
+                </form>
+                <?php
                 echo '</div>';
             }
         } else {
