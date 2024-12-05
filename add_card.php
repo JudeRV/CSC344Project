@@ -14,7 +14,7 @@ function validateData($data) {
     <title>Add a New Card</title>
     <meta charset="utf-8">
     <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
     <style>
         label {display: block; float: left; width: 10%;}
         input, select {display: block; width: 20%;}
@@ -28,6 +28,14 @@ function validateData($data) {
     </style>
 </head>
 <body>
+    <nav>
+        <ul>
+            <li><a href="home.php">Home</a></li>
+            <li><a href="add_card.php">Add Card</a></li>
+            <li><a href="deck.php">Deck</a></li>
+            <li><a href="login.php?logout=true">Logout</a></li>
+        </ul>
+    </nav>
     <h2>Add a New Card:</h2>
     <form action="add_card.php" method="POST">
         <input type="text" name="search_query" placeholder="Card Name" id="search_query_text">
@@ -39,7 +47,7 @@ function validateData($data) {
         if (isset($_POST["search_query"])) { // Searching for cards
             $cardName = htmlspecialchars($_POST["search_query"]);
             $cardName = str_replace(" ", "+", trim($cardName));
-    
+
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, "https://api.scryfall.com/cards/search?unique=prints&q=" . $cardName);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -47,15 +55,15 @@ function validateData($data) {
                 "User-Agent: MTGDatabaseApp/1.0",
                 "Accept: application/json"
             ]);
-    
+
             $api_response = curl_exec($ch);
             curl_close($ch);
-    
+
             if ($api_response === false) {
                 echo "Error fetching API data.";
             } else {
                 $api_response = json_decode($api_response);
-    
+
                 if (!empty($api_response->data)) {
                     echo <<<EOD
                     <table>
@@ -70,8 +78,8 @@ function validateData($data) {
                         </thead>
                         <tbody>
                     EOD;
-    
-                    foreach ($api_response->data as $card) {                                                 
+
+                    foreach ($api_response->data as $card) {
                         $cardSetID = validateData($card->set);
                         $cardIndex = validateData($card->collector_number);
                         $scryfallID = validateData($card->id);
@@ -92,7 +100,7 @@ function validateData($data) {
                             <form action="add_card.php" method="POST">
                                 <input type="hidden" name="CardSetID" value="$cardSetID">
                                 <input type="hidden" name="CardIndex" value="$cardIndex">
-                                <input type='hidden' name='ScryfallID' value='$scryfallID'>
+                                <input type="hidden" name="ScryfallID" value="$scryfallID">
                                 <input type="hidden" name="CardName" value="$cardName">
                                 <input type="hidden" name="CardManaValue" value="$cardManaValue">
                                 <input type="hidden" name="CardRarity" value="$cardRarity">
@@ -105,7 +113,7 @@ function validateData($data) {
                         EOD;
                         echo "</tr>";
                     }
-    
+
                     echo <<<EOD
                         </tbody>
                     </table>
@@ -122,8 +130,8 @@ function validateData($data) {
                 $cardName = $_POST["CardName"];
                 $cardManaValue = $_POST["CardManaValue"];
                 $cardRarity = $_POST["CardRarity"];
-                $cardCurrentPrice = $_POST["CardCurrentPrice"];
-                $colors = $_POST["Colors"];
+                $cardCurrentPrice = $_POST["CardCurrentPrice"] ?? 0.00;
+                $colors = implode(",", array_map('trim', explode(',', $_POST["Colors"])));
                 $cardImageURI = $_POST["CardImageURI"];
                 $userID = 2; // TODO: Replace with the logged-in user ID
 

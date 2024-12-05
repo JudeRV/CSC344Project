@@ -5,6 +5,30 @@ html{
 button{
 	background-color: #92817A;
 	border: 1px solid black;
-	padding: .5em 1em;
-	
+	padding: .5em 1em;	
+}
+nav {
+	background-color: #333;
+	padding: 10px;
+}
+nav ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	justify-content: center;
+}
+nav ul li {
+	margin: 0 15px;
+}
+nav ul li a {
+	color: white;
+	text-decoration: none;
+	font-size: 18px;
+	padding: 10px;
+	display: block;
+}
+nav ul li a:hover {
+	background-color: #575757;
+	border-radius: 4px;
 }

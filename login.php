@@ -46,13 +46,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <head>
     <title>Login</title>
     <meta charset="utf-8">
-    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico" link rel="stylesheet" href="style.css">
     <style>
         input, select {display: block; width: 20%; margin: 1rem 0;}
         #submit {width: 10%; margin-top: 2rem; margin-left: 2%;}
     </style>
 </head>
 <body>
+    <nav>
+        <ul>
+            <li><a href="home.php">Home</a></li>
+            <li><a href="add_card.php">Add Card</a></li>
+            <li><a href="deck.php">Deck</a></li>
+            <li><a href="login.php?logout=true">Logout</a></li>
+        </ul>
+    </nav>
     <h2>Log In</h2>
     <form action="login.php" method="POST">
         <input type="text" name="username" placeholder="Username" id="username">
