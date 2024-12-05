@@ -63,27 +63,6 @@ if (isset($_GET['deck_id'])) {
 }
 
 
-
-// Fetch the highest priced card for the user (if needed)
-try {
-    $sqlHighestPriceCard = "
-        SELECT CardName, CardCurrentPrice
-        FROM Card
-        WHERE UserID = 2
-          AND CardCurrentPrice = (
-              SELECT MAX(CardCurrentPrice)
-              FROM Card
-              WHERE UserID = 2
-          )
-    ";
-    $stmtHighestPrice = $dbc->prepare($sqlHighestPriceCard);
-    $stmtHighestPrice->execute();
-    $highestPriceCard = $stmtHighestPrice->fetch(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    die("Error fetching highest priced card: " . $e->getMessage());
-}
-
-
 try {
     $userID = 2; 
     echo "<p>DeckID: $deckId</p>";  
@@ -120,6 +99,7 @@ try {
             <li><a href="home.php">Home</a></li>
             <li><a href="add_card.php">Add Card</a></li>
             <li><a href="deck.php">Deck</a></li>
+            <li><a href="log.php">Changelog</a></li>
             <li><a href="login.php?logout=true">Logout</a></li>
         </ul>
     </nav>
@@ -139,10 +119,10 @@ try {
         <?php if (!empty($cards)): ?>
             <?php foreach ($cards as $card): ?>
                 <div class="card">
-                    <h2><?php echo htmlspecialchars($card['CardName']); ?></h2>
-                    <p>Mana Value: <?php echo htmlspecialchars($card['CardManaValue']); ?></p>
-                    <p>Rarity: <?php echo htmlspecialchars($card['CardRarity']); ?></p>
-                    <p>Current Price: $<?php echo htmlspecialchars($card['CardCurrentPrice']); ?></p>
+                    <h2><?= htmlspecialchars($card['CardName']); ?></h2>
+                    <p>Mana Value: <?= htmlspecialchars($card['CardManaValue']); ?></p>
+                    <p>Rarity: <?= htmlspecialchars($card['CardRarity']); ?></p>
+                    <p>Current Price: $<?= htmlspecialchars($card['CardCurrentPrice']); ?></p>
                 </div>
             <?php endforeach; ?>
         <?php else: ?>
@@ -154,16 +134,6 @@ try {
 
     <!-- Display Deck Total Price -->
     <h2>Total Price of Deck</h2>
-    <p>The total price of the deck is: $<?php echo number_format($totalPrice, 2); ?></p>
-
-    <?php if ($highestPriceCard): ?>
-        <h2>Highest Priced Card for UserID = 2</h2>
-        <div class="highest-price-card">
-            <p><strong>Card Name:</strong> <?php echo htmlspecialchars($highestPriceCard['CardName']); ?></p>
-            <p><strong>Current Price:</strong> $<?php echo htmlspecialchars($highestPriceCard['CardCurrentPrice']); ?></p>
-        </div>
-    <?php else: ?>
-        <p>No cards found for UserID = 2.</p>
-    <?php endif; ?>
+    <p>The total price of the deck is: $<?= number_format($totalPrice, 2); ?></p>
 </body>
 </html>

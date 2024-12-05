@@ -11,10 +11,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     try {
         $sql = "
-        SELECT UserID
-        FROM Account
-        WHERE Username = :username
-        AND UserPassword = :password
+            SELECT UserID
+            FROM Account
+            WHERE Username = :username
+            AND UserPassword = :password
         ";
         $stmt = $dbc->prepare($sql);
 
@@ -24,7 +24,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if ($stmt->execute()) { // Execute statement and check for success
             if ($stmt->rowcount() === 1) {
                 $userID = $stmt->fetchColumn();
-                setcookie("user", $userID, time() + 3600, "/", "ada.cis.uncw.edu", true, true);
+                setcookie("user", $userID, time() + 86400, "/", "ada.cis.uncw.edu", true, true);
+                $sql = "
+                    UPDATE Account
+                    SET UserLastUsedDate = CURDATE()
+                    WHERE UserID = :userid
+                ";
+                $stmt = $dbc->prepare($sql);
+
+                $stmt->bindParam(":userid", $userID, PDO::PARAM_STR);
+                $stmt->execute();
                 header("Location: home.php");
             }
             else {
@@ -53,18 +62,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </style>
 </head>
 <body>
-    <nav>
-        <ul>
-            <li><a href="home.php">Home</a></li>
-            <li><a href="add_card.php">Add Card</a></li>
-            <li><a href="deck.php">Deck</a></li>
-            <li><a href="login.php?logout=true">Logout</a></li>
-        </ul>
-    </nav>
     <h2>Log In</h2>
     <form action="login.php" method="POST">
         <input type="text" name="username" placeholder="Username" id="username">
-        <input type="text" name="password" placeholder="Password" id="password">
+        <input type="password" name="password" placeholder="Password" id="password">
         <input type="submit" name="submit" value="Login" id="submit">
     </form>
 </body>

@@ -17,8 +17,9 @@ try {
     // Base query for fetching cards with a join to filter by mana colors
     $sql = "SELECT DISTINCT C.* FROM Card C 
             LEFT JOIN CardColor CC ON C.CardSetID = CC.CardSetID AND C.CardIndex = CC.CardIndex
-            WHERE 1=1";
+            WHERE Deleted = 0 AND UserID = :userid";
     $params = [];
+    $params[':userid'] = $_COOKIE["user"];
 
     if (!empty($nameFilter)) {
         $sql .= " AND C.CardName LIKE :name";
@@ -29,7 +30,6 @@ try {
         $sql .= " AND C.CardSet LIKE :set";
         $params[':set'] = "%" . $setFilter . "%";
     }
-
     // If mana color filters are applied, add the conditions for color filtering (requiring all selected colors)
     if (!empty($colorsFilter)) {
         // Add a subquery that counts how many of the selected colors are associated with the card
@@ -61,7 +61,25 @@ try {
 } catch (PDOException $e) {
     die("Error fetching decks: " . $e->getMessage());
 }
-
+// Fetch the highest priced card for the user (if needed)
+try {
+    $sqlHighestPriceCard = "
+        SELECT c.CardName, c.CardCurrentPrice
+        FROM Card c
+        WHERE UserID = :userid
+          AND c.CardCurrentPrice = (
+              SELECT MAX(h.CardCurrentPrice)
+              FROM Card h
+              WHERE h.UserID = c.UserID
+          )
+    ";
+    $stmtHighestPrice = $dbc->prepare($sqlHighestPriceCard);
+    $stmtHighestPrice->bindParam(':userid', $_COOKIE["user"], PDO::PARAM_INT);
+    $stmtHighestPrice->execute();
+    $highestPriceCard = $stmtHighestPrice->fetch(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("Error fetching highest priced card: " . $e->getMessage());
+}
 // Fetch duplicate cards
 try {
     $sqlDuplicates = "
@@ -100,6 +118,7 @@ try {
             <li><a href="home.php">Home</a></li>
             <li><a href="add_card.php">Add Card</a></li>
             <li><a href="deck.php">Deck</a></li>
+            <li><a href="log.php">Changelog</a></li>
             <li><a href="login.php?logout=true">Logout</a></li>
         </ul>
     </nav>
@@ -156,6 +175,16 @@ try {
         ?>
     </div>
 
+    <!-- Display highest cost card -->
+    <?php if ($highestPriceCard): ?>
+        <h2>Highest Priced Card</h2>
+        <div class="highest-price-card">
+            <p><strong>Card Name:</strong> <?= htmlspecialchars($highestPriceCard['CardName']); ?></p>
+            <p><strong>Current Price:</strong> $<?= htmlspecialchars($highestPriceCard['CardCurrentPrice']); ?></p>
+        </div>
+    <?php else: ?>
+        <p>No cards found for UserID = 2.</p>
+    <?php endif; ?>
     <!-- Display duplicate cards -->
     <h2>Duplicate Cards</h2>
     <?php if (!empty($duplicates)): ?>

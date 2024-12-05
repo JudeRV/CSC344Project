@@ -33,7 +33,8 @@ function validateData($data) {
             <li><a href="home.php">Home</a></li>
             <li><a href="add_card.php">Add Card</a></li>
             <li><a href="deck.php">Deck</a></li>
-            <li><a href="login.php?logout=true">Logout</a></li>
+            <li><a href="log.php">Changelog</a></li>
+            <li><a href="login.php?logout=true">Logout</a></li>            
         </ul>
     </nav>
     <h2>Add a New Card:</h2>
@@ -133,7 +134,6 @@ function validateData($data) {
                 $cardCurrentPrice = $_POST["CardCurrentPrice"] ?? 0.00;
                 $colors = implode(",", array_map('trim', explode(',', $_POST["Colors"])));
                 $cardImageURI = $_POST["CardImageURI"];
-                $userID = 2; // TODO: Replace with the logged-in user ID
 
                 // Call the stored procedure
                 $sql = "CALL InsertCardWithColors(:CardSetID, :CardIndex, :ScryfallID, :CardName, :CardManaValue, :CardRarity, :CardCurrentPrice, :UserID, :CardImageURI, :Colors)";
@@ -145,7 +145,7 @@ function validateData($data) {
                 $stmt->bindParam(":CardManaValue", $cardManaValue);
                 $stmt->bindParam(":CardRarity", $cardRarity);
                 $stmt->bindParam(":CardCurrentPrice", $cardCurrentPrice);
-                $stmt->bindParam(":UserID", $userID);
+                $stmt->bindParam(":UserID", $_COOKIE["user"]);
                 $stmt->bindParam(":CardImageURI", $cardImageURI);
                 $stmt->bindParam(":Colors", $colors);
 
@@ -154,6 +154,7 @@ function validateData($data) {
                 } else {
                     echo "<p>Failed to add the card.</p>";
                 }
+
             } catch (PDOException $e) {
                 echo "<p>Error: " . $e->getMessage() . "</p>";
             }
